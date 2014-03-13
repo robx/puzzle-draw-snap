@@ -60,9 +60,18 @@ decodeAndDrawPuzzle = maybe Nothing drawP . decode
     drawP tp = case drawPuzzle tp of Error   _ -> Nothing
                                      Success d -> Just d
     
+
+getOutputChoice :: Snap OutputChoice
+getOutputChoice = do
+    ocs <- maybe "puzzle" id <$> getParam "output"
+    return $ case ocs of "solution" -> DrawSolution
+                         "both"     -> DrawExample
+                         _          -> DrawPuzzle
+
 puzzlePostHandler :: Snap ()
 puzzlePostHandler = do
+    o <- getOutputChoice
     body <- readRequestBody 4096
     case decodeAndDrawPuzzle (toStrict body) of
-        Just d  -> serveDiagram (Dims 300 300) (draw d DrawPuzzle)
+        Just d  -> serveDiagram (Dims 300 300) (draw d o)
         Nothing -> fail400
