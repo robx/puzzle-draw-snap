@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head></head>
+<body>
+<script src="jquery.js"></script>
+ 
+<h3>puzzle-draw demo</h3>
+
+<p>
+Renders a puzzle description to svg.
+</p>
+
+<div><textarea id="puzzle" rows="20" cols="80" style="font-family: monospace">
+type: fillomino
+puzzle: |
+  1234
+  ....
+  ....
+  3...
+solution: |
+  1234
+  3234
+  3134
+  3224
+</textarea></div>
+<div><button id="updateButton" value="Update">Update</button></div>
+<div><img id="drawing" /></div>
+<script>
+$("#updateButton").click(function(event) {
+    $.ajax({
+        url: "/puzzle",
+ 
+        // the data to send (will be converted to a query string)
+        data: $("#puzzle").val(),
+ 
+        // whether this is a POST or GET request
+        type: "POST",
+        contentType: "application/x-yaml",
+        processData: false,
+ 
+        // the type of data we expect back
+        dataType : "text",
+ 
+        // code to run if the request succeeds;
+        // the response is passed to the function
+        success: function(text) {
+            $("#drawing").attr("src", "data:image/svg+xml," + text);
+        }
+    });
+});
+
+</script>
+ 
+</body>
+</html>
