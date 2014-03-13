@@ -7,6 +7,7 @@ import Snap.Util.FileServe
 import Snap.Http.Server
 
 import Diagrams.Prelude hiding (Result)
+import Diagrams.BoundingBox
 import Diagrams.Backend.SVG
 
 import Data.Yaml
@@ -53,6 +54,18 @@ serveDiagram sz d = do
     modifyResponse $ setContentType "image/svg+xml"
     writeLazyText $ renderSvg svg
 
+cmtopoint :: Double -> Double
+cmtopoint = (* 28.3464567)
+
+cmtopix :: Double -> Double
+cmtopix = (* 40)
+
+dwidth :: Diagram B R2 -> Double
+dwidth = fst . unr2 . boxExtents . boundingBox
+
+sizeServeDiagram :: Diagram B R2 -> Snap ()
+sizeServeDiagram d = serveDiagram (Width . cmtopix . dwidth $ d) d
+
 decodeAndDrawPuzzle :: ByteString -> Maybe (Diagram B R2, Diagram B R2)
 decodeAndDrawPuzzle = maybe Nothing drawP . decode
   where
@@ -73,5 +86,5 @@ puzzlePostHandler = do
     o <- getOutputChoice
     body <- readRequestBody 4096
     case decodeAndDrawPuzzle (toStrict body) of
-        Just d  -> serveDiagram (Dims 300 300) (draw d o)
+        Just d  -> sizeServeDiagram (draw d o)
         Nothing -> fail400
