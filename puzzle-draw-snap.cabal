@@ -27,6 +27,7 @@ Executable puzzle-draw-snap
     aeson                     >= 0.7   && < 0.8,
     yaml                      >= 0.8   && < 0.9,
     puzzle-draw               >= 0.1   && < 0.2
+
   if impl(ghc >= 6.12.0)
     ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
                  -fno-warn-unused-do-bind

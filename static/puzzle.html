@@ -27,12 +27,13 @@ solution: |
 <input type="radio" name="output" value="puzzle" checked=1>puzzle</input>
 <input type="radio" name="output" value="solution">solution</input>
 <input type="radio" name="output" value="both">both</input>
+<button id="renderButton">Render</button>
+</div>
 
+<div><img id="drawing" /><span id="error" style="display: none"</div>
 
-<button id="updateButton" value="Update">Update</button></div>
-<div><img id="drawing" /></div>
 <script>
-$("#updateButton").click(function(event) {
+$("#renderButton").click(function(event) {
     $.ajax({
         url: "/puzzle?" + $.param({
             output: $("input[name=output]:checked").val()
@@ -48,10 +49,17 @@ $("#updateButton").click(function(event) {
  
         success: function(text) {
             $("#drawing").attr("src", "data:image/svg+xml," + text);
+            $("#error").hide();
+            $("#drawing").show();
+        },
+
+        error: function(req) {
+            $("#drawing").hide();
+            $("#error").text("error: " + req.responseText);
+            $("#error").show();
         }
     });
 });
-
 </script>
  
 </body>
