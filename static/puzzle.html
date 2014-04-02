@@ -49,7 +49,7 @@ $(function() {
 
 $("#exampleList").change(function() {
     $.ajax({
-        url: "/static/examples/" + $(this).val() + "-example.pzl",
+        url: $(this).val(),
         type: "GET",
 
         success: function(text) {
