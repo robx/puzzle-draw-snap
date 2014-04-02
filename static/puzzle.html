@@ -10,7 +10,12 @@
 Renders a puzzle description to svg.
 </p>
 
-<div><textarea id="puzzle" rows="20" cols="80" style="font-family: monospace">
+<div>
+<div><select id="exampleList">
+  <option value="fillomino">fillomino</option>
+  <option value="slitherlink">slitherlink</option>
+</select></div>
+<textarea id="puzzle" rows="20" cols="80" style="font-family: monospace">
 type: fillomino
 puzzle: |
   1234
@@ -33,6 +38,17 @@ solution: |
 <div><img id="drawing" /><span id="error" style="display: none"</div>
 
 <script>
+$("#exampleList").change(function() {
+    $.ajax({
+        url: "/static/examples/" + $(this).val() + "-example.pzl",
+        type: "GET",
+
+        success: function(text) {
+            $("#puzzle").val(text);
+        }
+    })
+});
+
 $("#renderButton").click(function(event) {
     $.ajax({
         url: "/puzzle?" + $.param({
