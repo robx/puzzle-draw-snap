@@ -2,6 +2,10 @@
 module Main where
 
 import Control.Applicative
+import Control.Monad
+import Data.Maybe
+import Control.Monad.IO.Class
+
 import Snap.Core
 import Snap.Util.FileServe
 import Snap.Http.Server
@@ -10,6 +14,7 @@ import Diagrams.Prelude hiding (Result)
 import Diagrams.BoundingBox
 import Diagrams.Backend.SVG
 
+import qualified Data.Aeson as J
 import Data.Yaml
 
 import Diagrams.TwoD.Puzzles.PuzzleDraw
@@ -21,12 +26,17 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Text.Blaze.Svg.Renderer.Text (renderSvg)
 
+import System.Directory
+import System.FilePath.Posix
+import Data.List (stripPrefix)
+
 main :: IO ()
 main = quickHttpServe site
 
 site :: Snap ()
-site = route [ ("puzzle", puzzlePostHandler) ] <|>
-       dir "static" (serveDirectory "static")
+site = route [ ("puzzle", puzzlePostHandler)
+             , ("examples", examplesGetHandler) ] <|>
+       dir "static" (serveDirectoryWith fancyDirectoryConfig "static")
 
 fail400 :: String -> Snap ()
 fail400 e = do
@@ -75,3 +85,27 @@ puzzlePostHandler = do
     case decodeAndDrawPuzzle o (BL.toStrict body) of
         Left e   -> fail400 e
         Right d  -> sizeServeDiagram d
+
+data Example = Example { name :: String, path :: FilePath }
+
+instance ToJSON Example where
+    toJSON (Example n p) = object [ "name" .= n, "path" .= p ]
+
+exampleFromPath :: FilePath -> Maybe Example
+exampleFromPath fp = do
+    guard $ takeExtension fp == ".pzl"
+    n <- stripSuffix "-example" $ takeBaseName fp
+    guard $ length n > 0
+    return . Example n $ "static" </> "examples" </> fp
+  where
+    stripSuffix s = fmap reverse . stripPrefix (reverse s) . reverse
+
+listExamples :: IO [Example]
+listExamples = do
+    files <- getDirectoryContents "static/examples"
+    return . catMaybes . map exampleFromPath $ files
+
+examplesGetHandler :: Snap ()
+examplesGetHandler = do
+    examples <- liftIO listExamples
+    writeLBS $ J.encode examples
