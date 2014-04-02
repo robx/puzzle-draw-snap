@@ -38,6 +38,15 @@ solution: |
 <div><img id="drawing" /><span id="error" style="display: none"</div>
 
 <script>
+$(function() {
+    $.getJSON("/examples", function(data) {
+        $.each(data, function(i, ex) {
+            $("#exampleList").append(
+                $('<option>', { 'value': ex.path }).text(ex.name));
+        });
+    });
+});
+
 $("#exampleList").change(function() {
     $.ajax({
         url: "/static/examples/" + $(this).val() + "-example.pzl",
