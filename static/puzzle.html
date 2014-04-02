@@ -7,27 +7,18 @@
 <h3>puzzle-draw demo</h3>
 
 <p>
-Renders a puzzle description to svg.
+Renders a puzzle description to SVG. Select one of the examples, and/or
+edit the puzzle definition. Then click "Render" to generate SVG.
 </p>
 
 <div>
-<div><select id="exampleList">
-  <option value="fillomino">fillomino</option>
-  <option value="slitherlink">slitherlink</option>
-</select></div>
+<select id="exampleList"></select>
+</div>
+
+<div>
 <textarea id="puzzle" rows="20" cols="80" style="font-family: monospace">
-type: fillomino
-puzzle: |
-  1234
-  ....
-  ....
-  3...
-solution: |
-  1234
-  3234
-  3134
-  3224
-</textarea></div>
+</textarea
+</div>
 <div>
 <input type="radio" name="output" value="puzzle" checked=1>puzzle</input>
 <input type="radio" name="output" value="solution">solution</input>
@@ -44,6 +35,7 @@ $(function() {
             $("#exampleList").append(
                 $('<option>', { 'value': ex.path }).text(ex.name));
         });
+        $("#exampleList").change();
     });
 });
 
