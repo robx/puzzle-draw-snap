@@ -17,9 +17,9 @@ import Diagrams.Backend.SVG
 import qualified Data.Aeson as J
 import Data.Yaml
 
-import Diagrams.TwoD.Puzzles.PuzzleDraw
-import Diagrams.TwoD.Puzzles.Puzzle
-import Data.Puzzles.Read (TypedPuzzle(..))
+import Puzzles.Diagrams.Draw
+import Puzzles.Compose
+import Puzzles.Parse.Puzzle (TypedPuzzle(..))
 
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString as B
