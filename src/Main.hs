@@ -19,6 +19,7 @@ import Data.Yaml
 
 import Puzzles.Diagrams.Draw
 import Puzzles.Compose
+import Puzzles.PuzzleTypes
 import Puzzles.Parse.Puzzle (TypedPuzzle(..))
 
 import qualified Data.ByteString.Char8 as C
@@ -66,11 +67,12 @@ decodeAndDrawPuzzle oc b = decodeEither b >>= drawP
   where
     drawP :: TypedPuzzle -> Either String (Diagram B R2)
     drawP (TP t p ms) = parseEither (handleP oc t) (p, ms)
-    handleP :: OutputChoice -> String -> (Value, Maybe Value) -> Parser (Diagram B R2)
-    handleP DrawPuzzle   = handle drawPuzzle' fail
-    handleP DrawSolution = handle drawSolution' fail
-    handleP DrawExample  = handle drawExample' fail
-    
+    handleP :: OutputChoice -> PuzzleType ->
+               (Value, Maybe Value) -> Parser (Diagram B R2)
+    handleP DrawPuzzle   = handle drawPuzzle'
+    handleP DrawSolution = handle drawSolution'
+    handleP DrawExample  = handle drawExample'
+
 getOutputChoice :: Snap OutputChoice
 getOutputChoice = do
     ocs <- maybe "puzzle" id <$> getParam "output"
