@@ -17,10 +17,10 @@ import Diagrams.Backend.SVG
 import qualified Data.Aeson as J
 import Data.Yaml
 
-import Puzzles.Diagrams.Draw
-import Puzzles.Compose
-import Puzzles.PuzzleTypes
-import Puzzles.Parse.Puzzle (TypedPuzzle(..))
+import Diagrams.Puzzles.Draw
+import Data.Puzzles.Compose
+import Data.Puzzles.PuzzleTypes
+import Text.Puzzles.Puzzle
 
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString as B
@@ -66,7 +66,11 @@ decodeAndDrawPuzzle :: OutputChoice -> B.ByteString ->
 decodeAndDrawPuzzle oc b = decodeEither b >>= drawP
   where
     drawP :: TypedPuzzle -> Either String (Diagram B R2)
-    drawP (TP t p ms) = parseEither (handleP oc t) (p, ms)
+    drawP (TP mt p ms) = parseEither goP (mt, (p, ms))
+    goP (mt, x) = do
+        t <- maybe (fail "no puzzle type given") pure mt
+        t' <- parseType t
+        handleP oc t' x
     handleP :: OutputChoice -> PuzzleType ->
                (Value, Maybe Value) -> Parser (Diagram B R2)
     handleP DrawPuzzle   = handle drawPuzzle'
