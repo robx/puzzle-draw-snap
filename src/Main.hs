@@ -37,7 +37,7 @@ main = quickHttpServe site
 site :: Snap ()
 site = route [ ("puzzle", puzzlePostHandler)
              , ("examples", examplesGetHandler) ] <|>
-       dir "static" (serveDirectoryWith fancyDirectoryConfig "static")
+       dir "static" (serveDirectory "static")
 
 fail400 :: String -> Snap ()
 fail400 e = do
