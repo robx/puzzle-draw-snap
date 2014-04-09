@@ -5,6 +5,7 @@ import Control.Applicative
 import Control.Monad
 import Data.Maybe
 import Control.Monad.IO.Class
+import Data.List (sort)
 
 import Snap.Core
 import Snap.Util.FileServe
@@ -94,6 +95,7 @@ puzzlePostHandler = do
         Right d  -> sizeServeDiagram d
 
 data Example = Example { name :: String, path :: FilePath }
+    deriving (Show, Ord, Eq)
 
 instance ToJSON Example where
     toJSON (Example n p) = object [ "name" .= n, "path" .= p ]
@@ -110,7 +112,7 @@ exampleFromPath fp = do
 listExamples :: IO [Example]
 listExamples = do
     files <- getDirectoryContents "static/examples"
-    return . catMaybes . map exampleFromPath $ files
+    return . sort . catMaybes . map exampleFromPath $ files
 
 examplesGetHandler :: Snap ()
 examplesGetHandler = do
