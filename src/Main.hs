@@ -35,7 +35,8 @@ main :: IO ()
 main = quickHttpServe site
 
 site :: Snap ()
-site = route [ ("puzzle", puzzlePostHandler)
+site = ifTop (redirect "static/puzzle.html") <|>
+       route [ ("puzzle", puzzlePostHandler)
              , ("examples", examplesGetHandler) ] <|>
        dir "static" (serveDirectory "static")
 
