@@ -12,7 +12,6 @@ import Snap.Util.FileServe
 import Snap.Http.Server
 
 import Diagrams.Prelude hiding (Result)
-import Diagrams.BoundingBox
 import Diagrams.Backend.SVG
 
 import qualified Data.Aeson as J
@@ -54,15 +53,10 @@ serveDiagram sz d = do
     modifyResponse $ setContentType "image/svg+xml"
     writeLazyText $ renderSvg svg
 
-cmtopix :: Double -> Double
-cmtopix = (* 40)
-
-dwidth :: Diagram B R2 -> Double
-dwidth = fst . unr2 . boxExtents . boundingBox
-
 sizeServeDiagram :: Diagram B R2 -> Snap ()
-sizeServeDiagram d = serveDiagram (Width . cmtopix . dwidth $ d) d
-
+sizeServeDiagram d = serveDiagram w d
+  where
+    w = Width . toOutputWidth Pixels . diagramWidth $ d
 decodeAndDrawPuzzle :: OutputChoice -> B.ByteString ->
                        Either String (Diagram B R2)
 decodeAndDrawPuzzle oc b = decodeEither b >>= drawP
