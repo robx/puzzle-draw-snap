@@ -19,7 +19,6 @@ import Data.Yaml
 
 import Diagrams.Puzzles.Draw
 import Data.Puzzles.Compose
-import Data.Puzzles.PuzzleTypes
 import Text.Puzzles.Puzzle
 
 import qualified Data.ByteString.Char8 as C
@@ -57,6 +56,7 @@ sizeServeDiagram :: Diagram B R2 -> Snap ()
 sizeServeDiagram d = serveDiagram w d
   where
     w = Width . toOutputWidth Pixels . diagramWidth $ d
+
 decodeAndDrawPuzzle :: OutputChoice -> B.ByteString ->
                        Either String (Diagram B R2)
 decodeAndDrawPuzzle oc b = decodeEither b >>= drawP
@@ -66,12 +66,15 @@ decodeAndDrawPuzzle oc b = decodeEither b >>= drawP
     goP (mt, x) = do
         t <- maybe (fail "no puzzle type given") pure mt
         t' <- parseType t
-        handleP oc t' x
-    handleP :: OutputChoice -> PuzzleType ->
-               (Value, Maybe Value) -> Parser (Diagram B R2)
-    handleP DrawPuzzle   = handle drawPuzzle'
-    handleP DrawSolution = handle drawSolution'
-    handleP DrawExample  = handle drawExample'
+        handle handler t' x
+    handler :: PuzzleHandler B ((Value, Maybe Value) -> Parser (Diagram B R2))
+    handler (pp, ps) (dp, ds) (p, ms) = do
+        p' <- pp p
+        ms' <- maybe (pure Nothing) (fmap Just . ps) ms
+        let pzl = dp p'
+            sol = do s' <- ms'
+                     return (ds (p', s'))
+        maybe (fail "no solution provided") return (draw (pzl, sol) oc)
 
 getOutputChoice :: Snap OutputChoice
 getOutputChoice = do
