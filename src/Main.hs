@@ -11,20 +11,21 @@ import Snap.Core
 import Snap.Util.FileServe
 import Snap.Http.Server
 
-import Diagrams.Prelude hiding (Result)
+import Diagrams.Prelude hiding (Result, (.=), render)
 import Diagrams.Backend.SVG
 
 import qualified Data.Aeson as J
 import Data.Yaml
 
-import Diagrams.Puzzles.Draw
-import Data.Puzzles.Compose
-import Text.Puzzles.Puzzle
+import Draw.Draw
+import Data.Compose
+import Parse.Puzzle
 
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
-import Text.Blaze.Svg.Renderer.Text (renderSvg)
+import qualified Data.Text as Text
+import Graphics.Svg.Core (renderText)
 
 import System.Directory
 import System.FilePath.Posix
@@ -46,35 +47,35 @@ fail400 e = do
    r <- getResponse
    finishWith r
 
-serveDiagram :: SizeSpec2D -> Diagram B R2 -> Snap ()
+serveDiagram :: SizeSpec V2 Double -> Diagram B -> Snap ()
 serveDiagram sz d = do
-    let svg = renderDia SVG (SVGOptions sz Nothing) d
+    let svg = renderDia SVG (SVGOptions sz Nothing (Text.pack "") [] True) d
     modifyResponse $ setContentType "image/svg+xml"
-    writeLazyText $ renderSvg svg
+    writeLazyText . renderText $ svg
 
-sizeServeDiagram :: Diagram B R2 -> Snap ()
+sizeServeDiagram :: Diagram B -> Snap ()
 sizeServeDiagram d = serveDiagram w d
   where
-    w = Width . toOutputWidth Pixels . diagramWidth $ d
+    w = mkWidth . toOutputWidth Pixels . diagramWidth $ d
 
 decodeAndDrawPuzzle :: OutputChoice -> B.ByteString ->
-                       Either String (Diagram B R2)
+                       Either String (Diagram B)
 decodeAndDrawPuzzle oc b = decodeEither b >>= drawP
   where
-    drawP :: TypedPuzzle -> Either String (Diagram B R2)
-    drawP (TP mt p ms) = parseEither goP (mt, (p, ms))
+    drawP :: TypedPuzzle -> Either String (Diagram B)
+    drawP (TP mt p ms mc) = parseEither goP (mt, (p, ms))
     goP (mt, x) = do
         t <- maybe (fail "no puzzle type given") pure mt
         t' <- parseType t
         handle handler t' x
-    handler :: PuzzleHandler B ((Value, Maybe Value) -> Parser (Diagram B R2))
-    handler (pp, ps) (dp, ds) (p, ms) = do
+    handler :: PuzzleHandler B ((Value, Maybe Value) -> Parser (Diagram B))
+    handler (pp, ps) (Drawers dp ds) (p, ms) = do
         p' <- pp p
         ms' <- maybe (pure Nothing) (fmap Just . ps) ms
-        let pzl = dp p'
+        let pzl = dp p' ()
             sol = do s' <- ms'
-                     return (ds (p', s'))
-        maybe (fail "no solution provided") return (draw (pzl, sol) oc)
+                     return (ds (p', s') ())
+        maybe (fail "no solution provided") return (render Nothing (pzl, sol) oc)
 
 getOutputChoice :: Snap OutputChoice
 getOutputChoice = do
