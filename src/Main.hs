@@ -103,7 +103,7 @@ exampleFromPath fp = do
     guard $ takeExtension fp == ".pzl"
     n <- stripSuffix "-example" $ takeBaseName fp
     guard $ length n > 0
-    return . Example n $ "/static" </> "examples" </> fp
+    return . Example n $ ".." </> "static" </> "examples" </> fp
   where
     stripSuffix s = fmap reverse . stripPrefix (reverse s) . reverse
 

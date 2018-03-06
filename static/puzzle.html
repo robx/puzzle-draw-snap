@@ -36,7 +36,7 @@ the source of this app is at
 
 <script>
 $(function() {
-    $.getJSON("/examples", function(data) {
+    $.getJSON("../examples", function(data) {
         $.each(data, function(i, ex) {
             $("#exampleList").append(
                 $('<option>', { 'value': ex.path }).text(ex.name));
@@ -58,7 +58,7 @@ $("#exampleList").change(function() {
 
 $("#renderButton").click(function(event) {
     $.ajax({
-        url: "/puzzle?" + $.param({
+        url: "../puzzle?" + $.param({
             output: $("input[name=output]:checked").val()
         }),
  
