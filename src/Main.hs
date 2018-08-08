@@ -7,9 +7,11 @@ import Data.Maybe
 import Control.Monad.IO.Class
 import Data.List (sort)
 
+import System.IO.Unsafe (unsafePerformIO)
+
 import Snap.Core
 import Snap.Util.FileServe
-import Snap.Http.Server
+import Snap.Http.Server hiding (Config)
 
 import Diagrams.Prelude hiding (Result, (.=), render)
 import Diagrams.Backend.SVG
@@ -20,6 +22,8 @@ import Data.Yaml
 import Draw.Draw
 import Data.Compose
 import Parse.Puzzle
+import Data.PuzzleTypes
+import Draw.Lib (fontAnelizaRegular, fontBit)
 
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString as B
@@ -56,26 +60,39 @@ serveDiagram sz d = do
 sizeServeDiagram :: Diagram B -> Snap ()
 sizeServeDiagram d = serveDiagram w d
   where
-    w = mkWidth . toOutputWidth Pixels . diagramWidth $ d
+    w = mkWidth . toOutputWidth Pixels . fst . diagramSize $ d
+
+loadConfig :: IO Config
+loadConfig = do
+    var <- fontAnelizaRegular
+    fix <- fontBit
+    return $ Config Screen var fix
+
+{-# NOINLINE config #-}
+config :: Config
+config = unsafePerformIO loadConfig
 
 decodeAndDrawPuzzle :: OutputChoice -> B.ByteString ->
                        Either String (Diagram B)
-decodeAndDrawPuzzle oc b = decodeEither b >>= drawP
+decodeAndDrawPuzzle oc b = dec b >>= drawP
   where
+    dec x = case decodeEither' x of
+      Left e -> Left $ show e
+      Right y -> Right y
     drawP :: TypedPuzzle -> Either String (Diagram B)
-    drawP (TP mt p ms mc) = parseEither goP (mt, (p, ms))
-    goP (mt, x) = do
-        t <- maybe (fail "no puzzle type given") pure mt
-        t' <- parseType t
+    drawP (TP mt mrt p ms _mc) = parseEither goP (mt, mrt, (p, ms))
+    goP :: (Maybe String, Maybe String, (Value, Maybe Value)) -> Parser (Diagram B)
+    goP (mt, mrt, x) = do
+        t' <- either fail pure (checkType (mrt `mplus` mt))
         handle handler t' x
     handler :: PuzzleHandler B ((Value, Maybe Value) -> Parser (Diagram B))
     handler (pp, ps) (Drawers dp ds) (p, ms) = do
         p' <- pp p
         ms' <- maybe (pure Nothing) (fmap Just . ps) ms
-        let pzl = dp p' ()
+        let pzl = dp p'
             sol = do s' <- ms'
-                     return (ds (p', s') ())
-        maybe (fail "no solution provided") return (render Nothing (pzl, sol) oc)
+                     return (ds (p', s'))
+        maybe (fail "no solution provided") return (render config Nothing (pzl, sol) oc)
 
 getOutputChoice :: Snap OutputChoice
 getOutputChoice = do
